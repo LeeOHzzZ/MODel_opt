@@ -15,13 +15,14 @@ from model_opt import dataflow_graph, ilp_solver
 
 class Scheduler:
     def __init__(
-        self, graph, timeout_s=None, rel_stop=None, solver="GUROBI", timestep_factor=1.0
+        self, graph, timeout_s=None, rel_stop=None, solver="GUROBI", timestep_factor=1.0, solver_threads=None
     ):
         self.graph = graph
         self.timeout = timeout_s
         self.rel_stop = rel_stop
         self.solver = solver
         self.num_timesteps = int(len(graph.nodes) * timestep_factor)
+        self.solver_threads = solver_threads
 
     # Compute the earliest time a node can be scheduled. It's in the range
     # [1, m], where m is the number of nodes in the graph.
@@ -277,7 +278,7 @@ class Scheduler:
                 # print(e.name + "[" + str(lb) + ", " + str(up) + "]")
 
         solver = ilp_solver.ILPSolver(
-            timeout_s=self.timeout, rel_stop=self.rel_stop, solver=self.solver
+            timeout_s=self.timeout, rel_stop=self.rel_stop, solver=self.solver, solver_threads=self.solver_threads
         )
 
         # Create 2 new variable for each tensor and timestep: generate and preserve
@@ -332,7 +333,7 @@ class Scheduler:
             solver.add_constraint(preserve_vars[e][lb] == 0)
             solver.add_constraint(fetch_vars[e][lb] == 0)
             solver.add_constraint(fetch_vars[e][lb + 1] == 0)
-            for t in range(alap[e.source] + 1, ub + 1):
+            for t in range(alap[e.source] + 1, ub + 1): # ???
                 solver.add_constraint(generate_vars[e][t] == 0)
 
             # Purely to help the solver: there is no need to swap the control edges.
@@ -468,7 +469,7 @@ class Scheduler:
             solver.add_constraint(total_spills <= max_spills)
 
         if account_for_fragmentation and not defrag:
-            # GCD
+            # GCD ???
             tensor_sizes = [t.size for t in self.graph.edges.values() if t.size > 0]
             gcd = self._GCD(tensor_sizes)
 

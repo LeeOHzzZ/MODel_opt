@@ -237,10 +237,13 @@ class Scheduler:
         min_memory_requirement = 0
         bottleneck_node = None
         for n in self.graph.nodes.values():
+            # print("\n", n.name)
             mem_needed = 0
             for e in n.fanin:
+                # print(e.name, e.size)
                 mem_needed += e.size
             for e in n.fanout:
+                # print(e.name, e.size)
                 mem_needed += e.size
             if mem_needed > min_memory_requirement:
                 min_memory_requirement = mem_needed

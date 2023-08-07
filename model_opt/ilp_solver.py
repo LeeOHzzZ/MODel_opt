@@ -29,6 +29,7 @@ class ILPSolver:
         method=None,
         int_feas_tol=None,
         extra_params=None,
+        solver_threads=None,
     ):
         self.vars = []
         self.timeout = timeout_s
@@ -37,9 +38,10 @@ class ILPSolver:
         self.int_feas_tol = int_feas_tol
         self.extra_params = extra_params
         self.num_constraints = 0
+        self.solver_threads = solver_threads
         if solver == "GUROBI" or solver == "gurobi":
             with get_gurobi_env() as env:
-                env.setParam("OutputFlag", logging.DEBUG >= logger.root.level)
+                # env.setParam("OutputFlag", logging.DEBUG >= logger.root.level)
                 self.model = gr.Model("gurobi", env=env)
         else:
             raise Exception("Currently only Gurobi solver is supported.")
@@ -136,6 +138,9 @@ class ILPSolver:
             self.model.setParam("Method", self.method)
         if self.int_feas_tol:
             self.model.setParam("IntFeasTol", self.int_feas_tol)
+        if self.solver_threads:
+            self.model.setParam("Threads", self.solver_threads)
+            print("setting gurobi #threads to", self.solver_threads)
         if self.extra_params:
             for param, value in self.extra_params.items():
                 self.model.setParam(param, value)

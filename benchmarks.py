@@ -23,6 +23,8 @@ from model_opt import simulator, training_graph_optimizer, utils, visualizer
 from model_opt.torch import fx_profiler, torch_graph_importer
 from model_opt.torch.fx_optimizer import FXOptimizer
 
+from nasnetlarge import NASNetALarge
+
 # Fix the environment to enable graphviz to work.
 # del os.environ["LD_LIBRARY_PATH"]
 
@@ -47,6 +49,9 @@ class Benchmark:
         if model_name == "alexnet":
             model = torchvision.models.alexnet()
             inputs = (torch.randn((batch_size, 3, 224, 224)),)
+        elif model_name == "nasnet":
+            model = NASNetALarge()
+            inputs = (torch.randn((batch_size, 3, 331, 331)),)
         elif model_name == "conformer":
             input_dim = 80
             model = torchaudio.models.Conformer(
@@ -353,7 +358,7 @@ class Benchmark:
             def dump_model():
                 print("  PRINTING MODEL IN THE BACKGROUND", flush=True)
                 with open(
-                    "/tmp/"
+                    "dump/"
                     + model_name
                     + "_"
                     + str(batch_size)
@@ -365,12 +370,13 @@ class Benchmark:
                     f.write(str(g))
 
                 g.dump(
-                    "/tmp/" + model_name + "_" + str(batch_size) + "_raw_" + mode,
+                    "dump/" + model_name + "_" + str(batch_size) + "_raw_" + mode,
                     format="svg",
                 )
 
-            p = Process(target=dump_model, name="dump_" + model_name, daemon=False)
-            p.start()
+            # p = Process(target=dump_model, name="dump_" + model_name, daemon=False)
+            # p.start()
+            dump_model()
 
         print("  CANONICALIZING MODEL", flush=True)
         g.canonicalize()
@@ -749,7 +755,7 @@ if __name__ == "__main__":
                         ) = b.run_node_ordering(graph, fx_graph, fx_to_df_map)
 
                         print(
-                            f"  REORDERED NODES IN {solver_time:.1f}s. SIMULATED PEAK MEMORY USAGE WAS {peak_mem_usage / GB:.4f} GB (SAVED {(simulated_peak_mem_usage - peak_mem_usage) / simulated_peak_mem_usage:%})",
+                            f"  REORDERED NODES IN {solver_time:.4f}s. SIMULATED PEAK MEMORY USAGE WAS {peak_mem_usage / GB:.4f} GB (SAVED {(simulated_peak_mem_usage - peak_mem_usage) / simulated_peak_mem_usage:%})",
                             flush=True,
                         )
 
